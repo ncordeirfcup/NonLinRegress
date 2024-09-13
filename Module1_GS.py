@@ -113,15 +113,7 @@ def selected():
     param_grid = dict(zip(x,ls2))
     print(param_grid)
     
-    nk,nv=[],[]
-    for i,j in param_grid.items():
-        for x in j:
-            if isinstance(x, float):
-               nv.append(int(x))
-               param_grid.pop(i,None)
-               param_grid[i]=nv    
-            else:
-               pass
+    
     
     if Criterion.get()==1:
         estimator=RandomForestRegressor(random_state=138)
