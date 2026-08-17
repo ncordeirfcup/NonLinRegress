@@ -14,7 +14,7 @@ import time
 import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
 from cross_validation2 import cross_validation as cv2
-from sklearn.model_selection import GridSearchCV 
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -40,7 +40,6 @@ from sklearn.ensemble import AdaBoostRegressor
 from sklearn.tree import DecisionTreeRegressor
 import sys
 from catboost import CatBoostRegressor
-import rdkit
 
 
 initialdir=os.getcwd()
@@ -56,8 +55,7 @@ def write_versions(filer):
     filer.write('LightGBM version: '+ str(lightgbm.__version__)+'\n')
     filer.write('Numpy version: '+str(np.__version__)+'\n')
     filer.write('Pandas version: '+str(pd.__version__)+'\n')
-    filer.write('Python version:' + str(sys.version)+'\n')
-    filer.write('Rdkit version'+str(rdkit.__version__)+'\n')
+    filer.write('Python version:' + str(sys.version))
     filer.write('\n')
 
 
@@ -73,7 +71,7 @@ def data1():
     file1 = pd.read_csv(filename1)
     global col1
     col1 = list(file1.head(0))
-    
+
 def data2():
     global filename2
     filename2 = askopenfilename(initialdir=initialdir,title = "Select test file")
@@ -89,7 +87,7 @@ def RMSE(df,logHC,Pred_loo):
     df['diff']=(df['Active']-df['Predict'])**2
     rmse=np.sqrt((df['diff']).sum()/(df.shape[0]))
     return rmse
-    
+
 def data3():
     global filename3
     filename3 = askopenfilename(initialdir=initialdir,title = "Select parameter file")
@@ -99,7 +97,7 @@ def data3():
     e_,f_=os.path.splitext(filename3)
     global file3
     file3 = pd.read_csv(filename3)
-    
+
 def correlation(X,cthreshold):
     col_corr = set() # Set of all the names of deleted columns
     corr_matrix = X.corr()
@@ -110,13 +108,13 @@ def correlation(X,cthreshold):
                 col_corr.add(colname)
                 if colname in X.columns:
                     del X[colname] # deleting the column from the dataset
-    return X   
+    return X
 
 def variance(X,threshold):
     from sklearn.feature_selection import VarianceThreshold
     sel = VarianceThreshold(threshold=(threshold* (1 - threshold)))
     sel_var=sel.fit_transform(X)
-    X=X[X.columns[sel.get_support(indices=True)]]    
+    X=X[X.columns[sel.get_support(indices=True)]]
     return X
 
 def pretreat(X,cthreshold,vthreshold):
@@ -154,9 +152,9 @@ def parse_value(v):
                    return int(v.split('.')[0])
             elif float(v)>0:
                    return float(v)
-        else: 
+        else:
             return int(v)
-                    
+
     except:
         pass
 
@@ -173,10 +171,10 @@ def csv_to_param_grid(csv_file):
 
     for col in df.columns:
         values = df[col].dropna().unique()
-        param_grid[col] = [parse_value(v) for v in values] 
+        param_grid[col] = [parse_value(v) for v in values]
 
     return param_grid
-    
+
 
 def selected():
     param_grid=csv_to_param_grid(filename3)
@@ -188,17 +186,17 @@ def selected():
         rn='RF'
     elif Criterion.get()==2:
         estimator1=KNeighborsRegressor()
-        rn='KNN'       
+        rn='KNN'
     elif Criterion.get()==3:
          estimator1 = AdaBoostRegressor(estimator=DecisionTreeRegressor(random_state=rd), random_state=rd)
          rn='AB'
 
     elif Criterion.get()==4:
         estimator1=SVR()
-        rn='SVR'        
+        rn='SVR'
     elif Criterion.get()==5:
          estimator1=GradientBoostingRegressor(verbose=0, random_state=rd)
-         rn='GB'       
+         rn='GB'
     elif Criterion.get()==6:
          estimator1=MLPRegressor(max_iter=7000, random_state=rd)
          rn='MLP'
@@ -226,20 +224,20 @@ def selected():
          rn='ETR'
     elif Criterion.get()==9:
          estimator1=LGBMRegressor(objective='regression',random_state=rd)
-         rn='LGB' 
+         rn='LGB'
     elif Criterion.get()==10:
          estimator1=DecisionTreeRegressor(random_state=rd)
          rn='DTR'
     elif Criterion.get()==11:
          estimator1=CatBoostRegressor(random_state=rd)
-         rn='CBR'  
+         rn='CBR'
     else:
         pass
     rn='g_'+rn
     return estimator1,param_grid,rn
 
-   
- 
+
+
 def sol():
     X_train=file1.iloc[:,2:].round(decimals=4)
     ytr=file1.iloc[:,1:2].round(decimals=4)
@@ -256,7 +254,10 @@ def sol():
     cvm=forthEntryTabOne.get()
     cvm=int(cvm)
     #param_grid=paramgrid()
-    clf = GridSearchCV(cv=cv1, estimator=estimator, param_grid=param_grid, n_jobs=-1, verbose=1)
+    if stc2.get()=='r2':
+       clf = GridSearchCV(cv=cv1, estimator=estimator, param_grid=param_grid, scoring = 'r2', n_jobs=-1, verbose=1)
+    elif stc2.get()=='nmae':
+        clf = GridSearchCV(cv=cv1, estimator=estimator, param_grid=param_grid, scoring = 'neg_mean_absolute_error', n_jobs=-1, verbose=1)
     print(clf)
     cthreshold=float(thirdEntryTabThreer3c1.get())
     vthreshold=float(fourthEntryTabThreer5c1.get())
@@ -276,8 +277,8 @@ def sol():
     pickle.dump(clfb, open(pname, 'wb'))
     print(clfb)
     clfb.fit(Xtr,ytr)
-    
-    
+
+
     filer = open(str(c_)+rn+"_tr.txt","w")
     write_versions(filer)
     filer.write('The best estimator is: '+'\n')
@@ -292,14 +293,14 @@ def sol():
     Xtr.columns=X_train.columns.tolist()
     writefile2(Xtr,ytr,ntr,clfb,cvm,filer,rn)
     filer.write("\n")
-   
+
 
 def writefile2(Xtr,ytr,ntr,model,cvm,filer,rn):
     cvv=cv2(Xtr,ytr,ntr,model,cvm)
     r2,mae,q2lmo,rm2tr,drm2tr,ls,aard=cvv.fit()
     print(ls.shape)
     dftr1=pd.concat([ntr,Xtr],axis=1)
-     
+
     #dftr2=ls.iloc[:,0:2]
     dftr=pd.merge(dftr1,ls.iloc[:,0:3],on=ls.iloc[:,0:1].columns[0],how='left')
     dftr.to_csv(str(c_)+str(rn)+"_trpr.csv",index=False)
@@ -350,7 +351,7 @@ def writefile2(Xtr,ytr,ntr,model,cvm,filer,rn):
        filer.write('RMSEP: '+str(RMSEP)+"\n")
        filer.write('AARD_test: '+str(AARDts)+"\n")
        filer.write("\n")
-       
+
     else:
         Xts=file2.iloc[:,1:]
         nts=file2.iloc[:,0:1]
@@ -360,7 +361,7 @@ def writefile2(Xtr,ytr,ntr,model,cvm,filer,rn):
         #yadts=adts.fit()
         dfts=pd.concat([nts,Xts,ytspr],axis=1)
         dfts.to_csv(str(c_)+str(rn)+"_scpr.csv",index=False)
-    
+
 # ==========================
 # Improved UI Section Only
 # ==========================
@@ -506,13 +507,21 @@ ttk.Label(settings_frame, text="Variance cut-off:").grid(row=0, column=2, padx=5
 fourthEntryTabThreer5c1 = ttk.Entry(settings_frame, width=12)
 fourthEntryTabThreer5c1.grid(row=0, column=3, padx=5)
 
-ttk.Label(settings_frame, text="CV (Grid Search):").grid(row=1, column=0, padx=5, pady=2, sticky="w")
+ttk.Label(settings_frame, text="CV (Grid Search) fold:").grid(row=1, column=0, padx=5, pady=2, sticky="w")
 thirdEntryTabOne = ttk.Entry(settings_frame, width=12)
 thirdEntryTabOne.grid(row=1, column=1, padx=5)
 
-ttk.Label(settings_frame, text="CV (Predictability):").grid(row=1, column=2, padx=5, pady=2, sticky="w")
+ttk.Label(settings_frame, text="CV (Predictability) fold:").grid(row=1, column=2, padx=5, pady=2, sticky="w")
 forthEntryTabOne = ttk.Entry(settings_frame, width=12)
 forthEntryTabOne.grid(row=1, column=3, padx=5)
+
+ttk.Label(settings_frame, text="CV (Grid Search) parameter:").grid(row=1, column=4, sticky="w", pady=10)
+stc2 = StringVar()
+ttk.Radiobutton(settings_frame, text='R2', variable=stc2, value='r2').grid(row=1, column=6, sticky="w")
+ttk.Radiobutton(settings_frame, text='NMAE', variable=stc2, value='nmae').grid(row=1, column=6, padx=35, sticky="w")
+
+
+
 
 # ===============================
 # RANDOM STATE (NEW SECTION)
